@@ -27,7 +27,7 @@ public class Habit extends Audit {
     @Column(name = "icon", nullable = false)
     private String icon;
 
-    @Column(name = "color", nullable = false)
+    @Column(name = "color", nullable = false, length = 6)
     private String color;
 
     @Enumerated(EnumType.STRING)
@@ -43,6 +43,10 @@ public class Habit extends Audit {
 
     @Column(name = "active", nullable = false)
     private boolean active = true;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "userId", nullable = false)
+    private User user;
 
     @OneToMany(mappedBy = "habit", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HabitLog> logs = new ArrayList<>();
