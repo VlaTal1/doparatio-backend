@@ -1,7 +1,5 @@
 databaseChangeLog:
   - include:
-      file: db/changelog/create-table-user.yaml
-  - include:
       file: db/changelog/create-table-habit.yaml
   - include:
       file: db/changelog/create-table-habit-log.yaml

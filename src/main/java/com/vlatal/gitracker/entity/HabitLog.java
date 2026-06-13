@@ -1,13 +1,14 @@
 package com.vlatal.gitracker.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 
-@Getter
-@Setter
 @Entity
 @Table(
         name = "HabitLog",
@@ -15,6 +16,11 @@ import java.time.LocalDate;
                 @UniqueConstraint(name = "UK_HabitLog_habit_logDate", columnNames = {"habitId", "logDate"})
         }
 )
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class HabitLog extends Audit {
 
     @Id
@@ -23,12 +29,12 @@ public class HabitLog extends Audit {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "habitId", nullable = false)
+    @JoinColumn(name = "habit_id", nullable = false)
     private Habit habit;
 
-    @Column(name = "logDate", nullable = false)
+    @Column(name = "log_date", nullable = false)
     private LocalDate logDate;
 
-    @Column(name = "currentValue", nullable = false)
+    @Column(name = "current_value", nullable = false)
     private Integer currentValue = 0;
 }

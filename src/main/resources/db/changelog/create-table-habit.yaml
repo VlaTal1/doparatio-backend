@@ -49,7 +49,7 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: user_id
-                  type: BIGINT
+                  type: VARCHAR(255)
                   constraints:
                     nullable: false
               - column:
@@ -62,10 +62,3 @@ databaseChangeLog:
                   type: TIMESTAMP
                   constraints:
                     nullable: false
-        - addForeignKeyConstraint:
-            baseTableName: habit
-            baseColumnNames: user_id
-            constraintName: FK_Habit_AppUser
-            referencedTableName: app_user
-            referencedColumnNames: id
-            onDelete: CASCADE
