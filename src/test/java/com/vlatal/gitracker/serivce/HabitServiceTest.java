@@ -13,6 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +34,12 @@ public class HabitServiceTest {
 
     @MockitoBean
     private UserService userService;
+
+    @Autowired
+    private HabitLogService habitLogService;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -332,5 +340,49 @@ public class HabitServiceTest {
         assertThat(found).isPresent();
         assertThat(found.get().getName()).isEqualTo("Quit Smoking");
         assertThat(found.get().isActive()).isTrue();
+    }
+
+    @Test
+    public void getAll_success() throws Exception {
+        // Create two habits
+        HabitDTO habit1 = HabitDTO.builder()
+                .name("Read Books")
+                .icon("book")
+                .color("FF0000")
+                .logType(LogType.NUMERIC)
+                .targetValue(5)
+                .scheduleDays(List.of(1, 3, 5))
+                .build();
+        HabitDTO saved1 = habitService.create(habit1);
+
+        HabitDTO habit2 = HabitDTO.builder()
+                .name("Drink Water")
+                .icon("water")
+                .color("0000FF")
+                .logType(LogType.BINARY)
+                .targetValue(1)
+                .scheduleDays(List.of(1, 2, 3))
+                .build();
+        HabitDTO saved2 = habitService.create(habit2);
+
+        // Add logs for different days
+        habitLogService.logHabit(saved1.getId(), java.time.LocalDate.of(2026, 6, 13));
+        habitLogService.logHabit(saved1.getId(), java.time.LocalDate.of(2026, 6, 14));
+        habitLogService.logHabit(saved2.getId(), java.time.LocalDate.of(2026, 6, 14));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        // Get all habits
+        List<HabitDTO> result = habitService.getAll();
+
+        assertThat(result).hasSize(2);
+
+        HabitDTO dto1 = result.stream().filter(h -> h.getId().equals(saved1.getId())).findFirst().orElseThrow();
+        assertThat(dto1.getLogs()).hasSize(2);
+
+        HabitDTO dto2 = result.stream().filter(h -> h.getId().equals(saved2.getId())).findFirst().orElseThrow();
+        assertThat(dto2.getLogs()).hasSize(1);
+        assertThat(dto2.getLogs().get(0).getLogDate()).isEqualTo(java.time.LocalDate.of(2026, 6, 14));
     }
 }

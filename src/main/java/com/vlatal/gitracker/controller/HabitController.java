@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/habit")
@@ -20,6 +22,12 @@ public class HabitController {
     private final HabitService habitService;
 
     private final HabitLogService habitLogService;
+
+    @GetMapping
+    public ResponseEntity<List<HabitDTO>> getAll() throws Exception {
+        List<HabitDTO> habits = habitService.getAll();
+        return ResponseEntity.ok(habits);
+    }
 
     @PostMapping("/")
     public ResponseEntity<HabitDTO> create(@Validated(OnCreate.class) @RequestBody HabitDTO habitDTO) throws Exception {

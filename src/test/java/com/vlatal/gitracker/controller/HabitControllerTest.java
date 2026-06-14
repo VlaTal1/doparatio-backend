@@ -540,4 +540,36 @@ public class HabitControllerTest {
                 .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.message").value("You do not have permission"));
     }
+
+    @Test
+    public void getAllTest_success() throws Exception {
+        LocalDate date = LocalDate.of(2026, 6, 14);
+        HabitLogDTO logDto = HabitLogDTO.builder()
+                .id(100L)
+                .logDate(date)
+                .currentValue(1)
+                .build();
+        HabitDTO habitDto = HabitDTO.builder()
+                .id(1L)
+                .name("Read Books")
+                .icon("book")
+                .color("FF0000")
+                .logType(LogType.NUMERIC)
+                .targetValue(5)
+                .scheduleDays(List.of(1, 3, 5))
+                .logs(List.of(logDto))
+                .build();
+
+        when(habitService.getAll()).thenReturn(List.of(habitDto));
+
+        mockMvc.perform(get("/api/habit"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].name").value("Read Books"))
+                .andExpect(jsonPath("$[0].logs").isArray())
+                .andExpect(jsonPath("$[0].logs[0].id").value(100))
+                .andExpect(jsonPath("$[0].logs[0].currentValue").value(1))
+                .andExpect(jsonPath("$[0].logs[0].logDate").value("2026-06-14"));
+    }
 }

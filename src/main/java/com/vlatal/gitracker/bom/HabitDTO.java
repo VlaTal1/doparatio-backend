@@ -49,4 +49,6 @@ public class HabitDTO {
     private boolean active = true;
 
     private String userId;
+
+    private List<HabitLogDTO> logs;
 }

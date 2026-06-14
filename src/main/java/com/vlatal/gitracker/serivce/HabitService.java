@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class HabitService {
@@ -20,6 +22,13 @@ public class HabitService {
     private final UserService userService;
 
     private final HabitRepository habitRepository;
+
+    public List<HabitDTO> getAll() throws Exception {
+        String currentUserId = userService.getCurrentUserId();
+        return habitRepository.findAllByUserId(currentUserId).stream()
+                .map(habitConverter::toDTO)
+                .toList();
+    }
 
     public HabitDTO create(HabitDTO habitDTO) throws Exception {
         validate(habitDTO);

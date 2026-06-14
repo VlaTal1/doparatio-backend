@@ -1,15 +1,12 @@
 package com.vlatal.gitracker.converter;
 
+import com.vlatal.gitracker.bom.HabitDTO;
 import com.vlatal.gitracker.bom.HabitLogDTO;
 import com.vlatal.gitracker.entity.HabitLog;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class HabitLogConverter {
-
-    private final HabitConverter habitConverter;
 
     public HabitLog fromDTO(HabitLogDTO entry) {
         if (entry == null) {
@@ -17,7 +14,6 @@ public class HabitLogConverter {
         }
         return HabitLog.builder()
                 .id(entry.getId())
-                .habit(entry.getHabit() != null ? habitConverter.fromDTO(entry.getHabit()) : null)
                 .logDate(entry.getLogDate())
                 .currentValue(entry.getCurrentValue())
                 .build();
@@ -29,7 +25,7 @@ public class HabitLogConverter {
         }
         return HabitLogDTO.builder()
                 .id(entry.getId())
-                .habit(entry.getHabit() != null ? habitConverter.toDTO(entry.getHabit()) : null)
+                .habit(entry.getHabit() != null ? HabitDTO.builder().id(entry.getHabit().getId()).build() : null)
                 .logDate(entry.getLogDate())
                 .currentValue(entry.getCurrentValue())
                 .build();
