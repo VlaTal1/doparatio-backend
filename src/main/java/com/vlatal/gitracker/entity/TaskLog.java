@@ -11,9 +11,9 @@ import java.time.LocalDate;
 
 @Entity
 @Table(
-        name = "HabitLog",
+        name = "task_log",
         uniqueConstraints = {
-                @UniqueConstraint(name = "UK_HabitLog_habit_logDate", columnNames = {"habitId", "logDate"})
+                @UniqueConstraint(name = "UK_TaskLog_task_logDate", columnNames = {"task_id", "log_date"})
         }
 )
 @Getter
@@ -21,7 +21,7 @@ import java.time.LocalDate;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class HabitLog extends Audit {
+public class TaskLog extends Audit {
 
     @Id
     @Column(name = "id")
@@ -29,15 +29,11 @@ public class HabitLog extends Audit {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "habit_id", nullable = false)
-    private Habit habit;
+    @JoinColumn(name = "task_id", nullable = false)
+    private Task task;
 
     @Column(name = "log_date", nullable = false)
     private LocalDate logDate;
-
-    @Column(name = "current_value", nullable = false)
-    @lombok.Builder.Default
-    private Integer currentValue = 0;
 
     @Column(name = "minutes_earned", nullable = false)
     @lombok.Builder.Default

@@ -42,6 +42,12 @@ public class HabitLogServiceTest {
     @MockitoBean
     private UserService userService;
 
+    @Autowired
+    private UserBalanceService userBalanceService;
+
+    @Autowired
+    private com.vlatal.gitracker.repository.UserBalanceRepository userBalanceRepository;
+
     private LocalDate testDate;
 
     @BeforeEach
@@ -49,6 +55,7 @@ public class HabitLogServiceTest {
         when(userService.getCurrentUserId()).thenReturn("test-user-id");
         habitLogRepository.deleteAll();
         habitRepository.deleteAll();
+        userBalanceRepository.deleteAll();
         testDate = LocalDate.of(2026, 6, 14);
     }
 
@@ -299,5 +306,96 @@ public class HabitLogServiceTest {
         assertThatThrownBy(() -> habitLogService.cancelLog(savedHabit.getId(), null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Log date cannot be null");
+    }
+
+    @Test
+    public void logHabit_awardsMinutes_binary() throws Exception {
+        HabitDTO habitDTO = HabitDTO.builder()
+                .name("Read Book")
+                .icon("book")
+                .color("00FF00")
+                .logType(LogType.BINARY)
+                .targetValue(1)
+                .build();
+        HabitDTO savedHabit = habitService.create(habitDTO);
+
+        habitLogService.logHabit(savedHabit.getId(), testDate);
+
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(10); // Base reward is 10 mins
+    }
+
+    @Test
+    public void logHabit_awardsMinutes_numeric_onlyOnCompletion() throws Exception {
+        HabitDTO habitDTO = HabitDTO.builder()
+                .name("Pushups")
+                .icon("gym")
+                .color("FF0000")
+                .logType(LogType.NUMERIC)
+                .targetValue(3)
+                .build();
+        HabitDTO savedHabit = habitService.create(habitDTO);
+
+        // Increments:
+        // 1st increment (1/3) -> no reward
+        habitLogService.logHabit(savedHabit.getId(), testDate);
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(0);
+
+        // 2nd increment (2/3) -> no reward
+        habitLogService.logHabit(savedHabit.getId(), testDate);
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(0);
+
+        // 3rd increment (3/3) -> completed! Base 10 mins awarded
+        habitLogService.logHabit(savedHabit.getId(), testDate);
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(10);
+
+        // 4th increment (4/3) -> already completed, no extra reward
+        habitLogService.logHabit(savedHabit.getId(), testDate);
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(10);
+    }
+
+    @Test
+    public void logHabit_streakBonus() throws Exception {
+        HabitDTO habitDTO = HabitDTO.builder()
+                .name("Meditation")
+                .icon("peace")
+                .color("FFFF00")
+                .logType(LogType.BINARY)
+                .targetValue(1)
+                .build();
+        HabitDTO savedHabit = habitService.create(habitDTO);
+
+        // Day 1 (June 11) -> +10 mins (streak 1)
+        habitLogService.logHabit(savedHabit.getId(), testDate.minusDays(3));
+        // Day 2 (June 12) -> +10 mins (streak 2)
+        habitLogService.logHabit(savedHabit.getId(), testDate.minusDays(2));
+        // Day 3 (June 13) -> +10 mins (streak 3)
+        habitLogService.logHabit(savedHabit.getId(), testDate.minusDays(1));
+        
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(30);
+
+        // Day 4 (June 14) -> +12 mins (streak 4: 4-7 days gets +2 mins bonus!)
+        habitLogService.logHabit(savedHabit.getId(), testDate);
+
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(42);
+    }
+
+    @Test
+    public void cancelLog_subtractsMinutes() throws Exception {
+        HabitDTO habitDTO = HabitDTO.builder()
+                .name("Read Book")
+                .icon("book")
+                .color("00FF00")
+                .logType(LogType.BINARY)
+                .targetValue(1)
+                .build();
+        HabitDTO savedHabit = habitService.create(habitDTO);
+
+        // Complete habit -> user gets 10 mins
+        habitLogService.logHabit(savedHabit.getId(), testDate);
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(10);
+
+        // Cancel log -> user loses 10 mins
+        habitLogService.cancelLog(savedHabit.getId(), testDate);
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(0);
     }
 }

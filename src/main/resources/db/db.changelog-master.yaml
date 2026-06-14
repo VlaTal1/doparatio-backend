@@ -3,3 +3,9 @@ databaseChangeLog:
       file: db/changelog/create-table-habit.yaml
   - include:
       file: db/changelog/create-table-habit-log.yaml
+  - include:
+      file: db/changelog/create-table-task.yaml
+  - include:
+      file: db/changelog/create-table-task-log.yaml
+  - include:
+      file: db/changelog/add-minutes-earned-and-balance.yaml
