@@ -343,6 +343,35 @@ public class HabitServiceTest {
     }
 
     @Test
+    public void updateHabit_changeLogTypeWithLogs_throwsException() throws Exception {
+        HabitDTO habitDTO = HabitDTO.builder()
+                .name("Drink Water")
+                .icon("water")
+                .color("0000FF")
+                .logType(LogType.NUMERIC)
+                .targetValue(5)
+                .scheduleDays(List.of(1, 2, 3))
+                .build();
+        HabitDTO saved = habitService.create(habitDTO);
+
+        habitLogService.logHabit(saved.getId(), java.time.LocalDate.of(2026, 6, 14));
+
+        HabitDTO updateDTO = HabitDTO.builder()
+                .name("Drink Water")
+                .icon("water")
+                .color("0000FF")
+                .logType(LogType.BINARY)
+                .targetValue(1)
+                .scheduleDays(List.of(1, 2, 3))
+                .build();
+
+        assertThatThrownBy(() -> habitService.update(saved.getId(), updateDTO))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Cannot change log type of a habit that has logged entries");
+    }
+
+
+    @Test
     public void getAll_success() throws Exception {
         // Create two habits
         HabitDTO habit1 = HabitDTO.builder()
@@ -384,5 +413,58 @@ public class HabitServiceTest {
         HabitDTO dto2 = result.stream().filter(h -> h.getId().equals(saved2.getId())).findFirst().orElseThrow();
         assertThat(dto2.getLogs()).hasSize(1);
         assertThat(dto2.getLogs().get(0).getLogDate()).isEqualTo(java.time.LocalDate.of(2026, 6, 14));
+    }
+
+    @Test
+    public void getById_success() throws Exception {
+        HabitDTO habitDTO = HabitDTO.builder()
+                .name("Read Books")
+                .icon("book")
+                .color("FF0000")
+                .logType(LogType.NUMERIC)
+                .targetValue(5)
+                .scheduleDays(List.of(1, 3, 5))
+                .build();
+        HabitDTO saved = habitService.create(habitDTO);
+
+        habitLogService.logHabit(saved.getId(), java.time.LocalDate.of(2026, 6, 14));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        HabitDTO result = habitService.getById(saved.getId());
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(saved.getId());
+        assertThat(result.getName()).isEqualTo("Read Books");
+        assertThat(result.getLogs()).hasSize(1);
+        assertThat(result.getLogs().get(0).getLogDate()).isEqualTo(java.time.LocalDate.of(2026, 6, 14));
+    }
+
+    @Test
+    public void getById_notFound_throwsException() {
+        assertThatThrownBy(() -> habitService.getById(9999L))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("Habit not found");
+    }
+
+    @Test
+    public void getById_permissionDenied_throwsException() throws Exception {
+        HabitDTO habitDTO = HabitDTO.builder()
+                .name("Read Books")
+                .icon("book")
+                .color("FF0000")
+                .logType(LogType.NUMERIC)
+                .targetValue(5)
+                .scheduleDays(List.of(1, 3, 5))
+                .build();
+        HabitDTO saved = habitService.create(habitDTO);
+
+        // Switch user context
+        when(userService.getCurrentUserId()).thenReturn("other-user-id");
+
+        assertThatThrownBy(() -> habitService.getById(saved.getId()))
+                .isInstanceOf(PermissionDeniedException.class)
+                .hasMessageContaining("You do not have permission to view this habit");
     }
 }

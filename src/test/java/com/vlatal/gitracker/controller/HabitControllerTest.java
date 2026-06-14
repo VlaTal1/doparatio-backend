@@ -572,4 +572,55 @@ public class HabitControllerTest {
                 .andExpect(jsonPath("$[0].logs[0].currentValue").value(1))
                 .andExpect(jsonPath("$[0].logs[0].logDate").value("2026-06-14"));
     }
+
+    @Test
+    public void getByIdTest_success() throws Exception {
+        LocalDate date = LocalDate.of(2026, 6, 14);
+        HabitLogDTO logDto = HabitLogDTO.builder()
+                .id(100L)
+                .logDate(date)
+                .currentValue(1)
+                .build();
+        HabitDTO habitDto = HabitDTO.builder()
+                .id(1L)
+                .name("Read Books")
+                .icon("book")
+                .color("FF0000")
+                .logType(LogType.NUMERIC)
+                .targetValue(5)
+                .scheduleDays(List.of(1, 3, 5))
+                .logs(List.of(logDto))
+                .build();
+
+        when(habitService.getById(1L)).thenReturn(habitDto);
+
+        mockMvc.perform(get("/api/habit/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("Read Books"))
+                .andExpect(jsonPath("$.logs").isArray())
+                .andExpect(jsonPath("$.logs[0].id").value(100))
+                .andExpect(jsonPath("$.logs[0].currentValue").value(1))
+                .andExpect(jsonPath("$.logs[0].logDate").value("2026-06-14"));
+    }
+
+    @Test
+    public void getByIdTest_notFound() throws Exception {
+        when(habitService.getById(1L)).thenThrow(new NotFoundException("Habit not found"));
+
+        mockMvc.perform(get("/api/habit/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Habit not found"));
+    }
+
+    @Test
+    public void getByIdTest_permissionDenied() throws Exception {
+        when(habitService.getById(1L)).thenThrow(new PermissionDeniedException("You do not have permission"));
+
+        mockMvc.perform(get("/api/habit/1"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("You do not have permission"));
+    }
 }

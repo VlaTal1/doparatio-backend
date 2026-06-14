@@ -29,6 +29,12 @@ public class HabitController {
         return ResponseEntity.ok(habits);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<HabitDTO> getById(@PathVariable Long id) throws Exception {
+        HabitDTO habit = habitService.getById(id);
+        return ResponseEntity.ok(habit);
+    }
+
     @PostMapping("/")
     public ResponseEntity<HabitDTO> create(@Validated(OnCreate.class) @RequestBody HabitDTO habitDTO) throws Exception {
         HabitDTO savedHabitDto = habitService.create(habitDTO);

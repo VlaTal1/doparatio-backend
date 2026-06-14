@@ -7,6 +7,7 @@ import com.vlatal.gitracker.entity.Habit;
 import com.vlatal.gitracker.exception.NotFoundException;
 import com.vlatal.gitracker.exception.PermissionDeniedException;
 import com.vlatal.gitracker.repository.HabitRepository;
+import com.vlatal.gitracker.repository.HabitLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -23,11 +24,24 @@ public class HabitService {
 
     private final HabitRepository habitRepository;
 
+    private final HabitLogRepository habitLogRepository;
+
     public List<HabitDTO> getAll() throws Exception {
         String currentUserId = userService.getCurrentUserId();
         return habitRepository.findAllByUserId(currentUserId).stream()
                 .map(habitConverter::toDTO)
                 .toList();
+    }
+
+    public HabitDTO getById(Long id) throws Exception {
+        Habit habit = habitRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Habit not found"));
+
+        if (!habit.getUserId().equals(userService.getCurrentUserId())) {
+            throw new PermissionDeniedException("You do not have permission to view this habit");
+        }
+
+        return habitConverter.toDTO(habit);
     }
 
     public HabitDTO create(HabitDTO habitDTO) throws Exception {
@@ -60,6 +74,10 @@ public class HabitService {
         }
 
         validate(habitDTO);
+
+        if (habit.getLogType() != habitDTO.getLogType() && habitLogRepository.existsByHabitId(id)) {
+            throw new IllegalArgumentException("Cannot change log type of a habit that has logged entries");
+        }
 
         habit.setName(habitDTO.getName());
         habit.setIcon(habitDTO.getIcon());
