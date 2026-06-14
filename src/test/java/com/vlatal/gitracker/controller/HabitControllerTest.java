@@ -2,6 +2,10 @@ package com.vlatal.gitracker.controller;
 
 import com.vlatal.gitracker.bom.HabitDTO;
 import com.vlatal.gitracker.domain.LogType;
+import com.vlatal.gitracker.exception.NotFoundException;
+import com.vlatal.gitracker.exception.PermissionDeniedException;
+import com.vlatal.gitracker.bom.HabitLogDTO;
+import com.vlatal.gitracker.serivce.HabitLogService;
 import com.vlatal.gitracker.serivce.HabitService;
 import com.vlatal.gitracker.serivce.JwtService;
 import org.junit.jupiter.api.Test;
@@ -16,26 +20,18 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import com.vlatal.gitracker.exception.NotFoundException;
-import com.vlatal.gitracker.exception.PermissionDeniedException;
 
-@WebMvcTest(
-        controllers = HabitController.class,
-        excludeAutoConfiguration = {SecurityAutoConfiguration.class, UserDetailsServiceAutoConfiguration.class},
-        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = com.vlatal.gitracker.config.SecurityConfig.class)
-)
+@WebMvcTest(controllers = HabitController.class, excludeAutoConfiguration = {SecurityAutoConfiguration.class,
+        UserDetailsServiceAutoConfiguration.class}, excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = com.vlatal.gitracker.config.SecurityConfig.class))
 public class HabitControllerTest {
 
     @Autowired
@@ -49,6 +45,9 @@ public class HabitControllerTest {
 
     @MockitoBean
     private JwtService jwtService;
+
+    @MockitoBean
+    private HabitLogService habitLogService;
 
     @Test
     public void createTest_success() throws Exception {
@@ -389,7 +388,8 @@ public class HabitControllerTest {
                 .scheduleDays(List.of(1, 2, 3))
                 .build();
 
-        when(habitService.update(eq(1L), any(HabitDTO.class))).thenThrow(new PermissionDeniedException("You do not have permission"));
+        when(habitService.update(eq(1L), any(HabitDTO.class)))
+                .thenThrow(new PermissionDeniedException("You do not have permission"));
 
         mockMvc.perform(put("/api/habit/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -397,5 +397,76 @@ public class HabitControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.message").value("You do not have permission"));
+    }
+
+    @Test
+    public void logHabitTest_success() throws Exception {
+        LocalDate date = LocalDate.of(2026, 6, 14);
+        HabitLogDTO inputDto = HabitLogDTO.builder()
+                .logDate(date)
+                .build();
+        HabitLogDTO savedDto = HabitLogDTO.builder()
+                .id(10L)
+                .logDate(date)
+                .currentValue(1)
+                .build();
+
+        when(habitLogService.logHabit(1L, date)).thenReturn(savedDto);
+
+        mockMvc.perform(post("/api/habit/1/log")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(10))
+                .andExpect(jsonPath("$.currentValue").value(1))
+                .andExpect(jsonPath("$.logDate").value("2026-06-14"));
+    }
+
+    @Test
+    public void logHabitTest_notFound() throws Exception {
+        LocalDate date = LocalDate.of(2026, 6, 14);
+        HabitLogDTO inputDto = HabitLogDTO.builder()
+                .logDate(date)
+                .build();
+        when(habitLogService.logHabit(1L, date)).thenThrow(new NotFoundException("Habit not found"));
+
+        mockMvc.perform(post("/api/habit/1/log")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Habit not found"));
+    }
+
+    @Test
+    public void logHabitTest_permissionDenied() throws Exception {
+        LocalDate date = LocalDate.of(2026, 6, 14);
+        HabitLogDTO inputDto = HabitLogDTO.builder()
+                .logDate(date)
+                .build();
+        when(habitLogService.logHabit(1L, date)).thenThrow(new PermissionDeniedException("You do not have permission"));
+
+        mockMvc.perform(post("/api/habit/1/log")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("You do not have permission"));
+    }
+
+    @Test
+    public void logHabitTest_invalidArgument() throws Exception {
+        LocalDate date = LocalDate.of(2026, 6, 14);
+        HabitLogDTO inputDto = HabitLogDTO.builder()
+                .logDate(date)
+                .build();
+        when(habitLogService.logHabit(1L, date)).thenThrow(new IllegalArgumentException("Habit is already logged for 2026-06-14"));
+
+        mockMvc.perform(post("/api/habit/1/log")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Habit is already logged for 2026-06-14"));
     }
 }
