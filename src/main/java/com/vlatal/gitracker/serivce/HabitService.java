@@ -4,6 +4,8 @@ import com.vlatal.gitracker.bom.HabitDTO;
 import com.vlatal.gitracker.converter.HabitConverter;
 import com.vlatal.gitracker.domain.LogType;
 import com.vlatal.gitracker.entity.Habit;
+import com.vlatal.gitracker.exception.NotFoundException;
+import com.vlatal.gitracker.exception.PermissionDeniedException;
 import com.vlatal.gitracker.repository.HabitRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,5 +40,16 @@ public class HabitService {
 
         Habit saved = habitRepository.save(habitConverter.fromDTO(habitDTO));
         return habitConverter.toDTO(saved);
+    }
+
+    public void delete(Long id) throws Exception {
+        Habit habit = habitRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Habit not found"));
+
+        if (!habit.getUserId().equals(userService.getCurrentUserId())) {
+            throw new PermissionDeniedException("You do not have permission to delete this habit");
+        }
+
+        habitRepository.delete(habit);
     }
 }

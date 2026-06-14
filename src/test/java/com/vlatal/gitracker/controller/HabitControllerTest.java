@@ -19,10 +19,15 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.vlatal.gitracker.exception.NotFoundException;
+import com.vlatal.gitracker.exception.PermissionDeniedException;
 
 @WebMvcTest(
         controllers = HabitController.class,
@@ -267,5 +272,33 @@ public class HabitControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void deleteTest_success() throws Exception {
+        doNothing().when(habitService).delete(1L);
+
+        mockMvc.perform(delete("/api/habit/1"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    public void deleteTest_notFound() throws Exception {
+        doThrow(new NotFoundException("Habit not found")).when(habitService).delete(1L);
+
+        mockMvc.perform(delete("/api/habit/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Habit not found"));
+    }
+
+    @Test
+    public void deleteTest_permissionDenied() throws Exception {
+        doThrow(new PermissionDeniedException("You do not have permission")).when(habitService).delete(1L);
+
+        mockMvc.perform(delete("/api/habit/1"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("You do not have permission"));
     }
 }
