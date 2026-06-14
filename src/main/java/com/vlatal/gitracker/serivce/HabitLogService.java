@@ -69,4 +69,36 @@ public class HabitLogService {
         HabitLog savedLog = habitLogRepository.save(habitLog);
         return habitLogConverter.toDTO(savedLog);
     }
+
+    @Transactional
+    public HabitLogDTO cancelLog(Long habitId, LocalDate logDate) throws Exception {
+        if (logDate == null) {
+            throw new IllegalArgumentException("Log date cannot be null");
+        }
+
+        Habit habit = habitRepository.findById(habitId)
+                .orElseThrow(() -> new NotFoundException("Habit not found"));
+
+        if (!habit.getUserId().equals(userService.getCurrentUserId())) {
+            throw new PermissionDeniedException("You do not have permission to cancel logs for this habit");
+        }
+
+        HabitLog habitLog = habitLogRepository.findByHabitIdAndLogDate(habitId, logDate)
+                .orElseThrow(() -> new NotFoundException("Habit log not found"));
+
+        if (habit.getLogType() == LogType.BINARY) {
+            habitLogRepository.delete(habitLog);
+            return null;
+        } else { // NUMERIC
+            int newValue = habitLog.getCurrentValue() - 1;
+            if (newValue <= 0) {
+                habitLogRepository.delete(habitLog);
+                return null;
+            } else {
+                habitLog.setCurrentValue(newValue);
+                HabitLog savedLog = habitLogRepository.save(habitLog);
+                return habitLogConverter.toDTO(savedLog);
+            }
+        }
+    }
 }

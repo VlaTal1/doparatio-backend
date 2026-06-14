@@ -469,4 +469,75 @@ public class HabitControllerTest {
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("Habit is already logged for 2026-06-14"));
     }
+
+    @Test
+    public void cancelLogTest_deleted() throws Exception {
+        LocalDate date = LocalDate.of(2026, 6, 14);
+        HabitLogDTO inputDto = HabitLogDTO.builder()
+                .logDate(date)
+                .build();
+
+        when(habitLogService.cancelLog(1L, date)).thenReturn(null);
+
+        mockMvc.perform(delete("/api/habit/1/log")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    public void cancelLogTest_decremented() throws Exception {
+        LocalDate date = LocalDate.of(2026, 6, 14);
+        HabitLogDTO inputDto = HabitLogDTO.builder()
+                .logDate(date)
+                .build();
+        HabitLogDTO savedDto = HabitLogDTO.builder()
+                .id(10L)
+                .logDate(date)
+                .currentValue(2)
+                .build();
+
+        when(habitLogService.cancelLog(1L, date)).thenReturn(savedDto);
+
+        mockMvc.perform(delete("/api/habit/1/log")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(10))
+                .andExpect(jsonPath("$.currentValue").value(2));
+    }
+
+    @Test
+    public void cancelLogTest_notFound() throws Exception {
+        LocalDate date = LocalDate.of(2026, 6, 14);
+        HabitLogDTO inputDto = HabitLogDTO.builder()
+                .logDate(date)
+                .build();
+
+        when(habitLogService.cancelLog(1L, date)).thenThrow(new NotFoundException("Habit log not found"));
+
+        mockMvc.perform(delete("/api/habit/1/log")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Habit log not found"));
+    }
+
+    @Test
+    public void cancelLogTest_permissionDenied() throws Exception {
+        LocalDate date = LocalDate.of(2026, 6, 14);
+        HabitLogDTO inputDto = HabitLogDTO.builder()
+                .logDate(date)
+                .build();
+
+        when(habitLogService.cancelLog(1L, date)).thenThrow(new PermissionDeniedException("You do not have permission"));
+
+        mockMvc.perform(delete("/api/habit/1/log")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("You do not have permission"));
+    }
 }

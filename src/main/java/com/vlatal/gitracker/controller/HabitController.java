@@ -48,4 +48,16 @@ public class HabitController {
         HabitLogDTO savedLog = habitLogService.logHabit(habitId, request.getLogDate());
         return ResponseEntity.ok(savedLog);
     }
+
+    @DeleteMapping("/{habitId}/log")
+    public ResponseEntity<HabitLogDTO> cancelLog(
+            @PathVariable Long habitId,
+            @RequestBody HabitLogDTO request
+    ) throws Exception {
+        HabitLogDTO result = habitLogService.cancelLog(habitId, request.getLogDate());
+        if (result == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(result);
+    }
 }
