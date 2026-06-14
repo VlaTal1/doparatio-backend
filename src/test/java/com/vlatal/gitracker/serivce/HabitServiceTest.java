@@ -237,4 +237,100 @@ public class HabitServiceTest {
         Optional<Habit> found = habitRepository.findById(saved.getId());
         assertThat(found).isPresent();
     }
+
+    @Test
+    public void updateHabit_success() throws Exception {
+        // Create habit
+        HabitDTO habitDTO = HabitDTO.builder()
+                .name("Quit Smoking")
+                .icon("smoke")
+                .color("aaaaaa")
+                .logType(LogType.BINARY)
+                .targetValue(1)
+                .scheduleDays(List.of(1, 2, 3))
+                .build();
+        HabitDTO saved = habitService.create(habitDTO);
+
+        // Update habit
+        HabitDTO updateDTO = HabitDTO.builder()
+                .name("Quit Smoking Completely")
+                .icon("nosmoke")
+                .color("bbbbbb")
+                .logType(LogType.BINARY)
+                .targetValue(1)
+                .scheduleDays(List.of(1, 2, 3, 4))
+                .active(false)
+                .build();
+
+        HabitDTO result = habitService.update(saved.getId(), updateDTO);
+
+        // Verify result
+        assertThat(result.getId()).isEqualTo(saved.getId());
+        assertThat(result.getName()).isEqualTo("Quit Smoking Completely");
+        assertThat(result.getIcon()).isEqualTo("nosmoke");
+        assertThat(result.getColor()).isEqualTo("bbbbbb");
+        assertThat(result.getScheduleDays()).containsExactly(1, 2, 3, 4);
+        assertThat(result.isActive()).isFalse();
+
+        // Verify in DB
+        Optional<Habit> found = habitRepository.findById(saved.getId());
+        assertThat(found).isPresent();
+        assertThat(found.get().getName()).isEqualTo("Quit Smoking Completely");
+        assertThat(found.get().isActive()).isFalse();
+    }
+
+    @Test
+    public void updateHabit_notFound_throwsException() {
+        HabitDTO updateDTO = HabitDTO.builder()
+                .name("Quit Smoking Completely")
+                .icon("nosmoke")
+                .color("bbbbbb")
+                .logType(LogType.BINARY)
+                .targetValue(1)
+                .scheduleDays(List.of(1, 2, 3, 4))
+                .active(false)
+                .build();
+
+        assertThatThrownBy(() -> habitService.update(9999L, updateDTO))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("Habit not found");
+    }
+
+    @Test
+    public void updateHabit_permissionDenied_throwsException() throws Exception {
+        // Create habit owned by test-user-id
+        HabitDTO habitDTO = HabitDTO.builder()
+                .name("Quit Smoking")
+                .icon("smoke")
+                .color("aaaaaa")
+                .logType(LogType.BINARY)
+                .targetValue(1)
+                .scheduleDays(List.of(1, 2, 3))
+                .build();
+        HabitDTO saved = habitService.create(habitDTO);
+
+        // Switch user context to someone else
+        when(userService.getCurrentUserId()).thenReturn("other-user-id");
+
+        HabitDTO updateDTO = HabitDTO.builder()
+                .name("Quit Smoking Completely")
+                .icon("nosmoke")
+                .color("bbbbbb")
+                .logType(LogType.BINARY)
+                .targetValue(1)
+                .scheduleDays(List.of(1, 2, 3, 4))
+                .active(false)
+                .build();
+
+        // Try updating and expect access denied
+        assertThatThrownBy(() -> habitService.update(saved.getId(), updateDTO))
+                .isInstanceOf(PermissionDeniedException.class)
+                .hasMessageContaining("You do not have permission to update this habit");
+
+        // Verify database remains unchanged
+        Optional<Habit> found = habitRepository.findById(saved.getId());
+        assertThat(found).isPresent();
+        assertThat(found.get().getName()).isEqualTo("Quit Smoking");
+        assertThat(found.get().isActive()).isTrue();
+    }
 }

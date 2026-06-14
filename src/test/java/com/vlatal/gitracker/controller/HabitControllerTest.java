@@ -19,11 +19,13 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import com.vlatal.gitracker.exception.NotFoundException;
@@ -297,6 +299,101 @@ public class HabitControllerTest {
         doThrow(new PermissionDeniedException("You do not have permission")).when(habitService).delete(1L);
 
         mockMvc.perform(delete("/api/habit/1"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("You do not have permission"));
+    }
+
+    @Test
+    public void updateTest_success() throws Exception {
+        HabitDTO inputDto = HabitDTO.builder()
+                .name("Drink Water Updated")
+                .icon("water")
+                .color("000000")
+                .logType(LogType.BINARY)
+                .targetValue(1)
+                .scheduleDays(List.of(1, 2, 3))
+                .active(false)
+                .build();
+
+        HabitDTO updatedDto = HabitDTO.builder()
+                .id(1L)
+                .name("Drink Water Updated")
+                .icon("water")
+                .color("000000")
+                .logType(LogType.BINARY)
+                .targetValue(1)
+                .scheduleDays(List.of(1, 2, 3))
+                .active(false)
+                .userId("test-user-id")
+                .build();
+
+        when(habitService.update(eq(1L), any(HabitDTO.class))).thenReturn(updatedDto);
+
+        mockMvc.perform(put("/api/habit/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("Drink Water Updated"))
+                .andExpect(jsonPath("$.color").value("000000"))
+                .andExpect(jsonPath("$.active").value(false));
+    }
+
+    @Test
+    public void updateTest_validationFailed() throws Exception {
+        HabitDTO inputDto = HabitDTO.builder()
+                .name("") // blank name
+                .icon("water")
+                .color("FFFFFF")
+                .logType(LogType.BINARY)
+                .targetValue(1)
+                .scheduleDays(List.of(1, 2, 3))
+                .build();
+
+        mockMvc.perform(put("/api/habit/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void updateTest_notFound() throws Exception {
+        HabitDTO inputDto = HabitDTO.builder()
+                .name("Drink Water")
+                .icon("water")
+                .color("FFFFFF")
+                .logType(LogType.BINARY)
+                .targetValue(1)
+                .scheduleDays(List.of(1, 2, 3))
+                .build();
+
+        when(habitService.update(eq(1L), any(HabitDTO.class))).thenThrow(new NotFoundException("Habit not found"));
+
+        mockMvc.perform(put("/api/habit/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Habit not found"));
+    }
+
+    @Test
+    public void updateTest_permissionDenied() throws Exception {
+        HabitDTO inputDto = HabitDTO.builder()
+                .name("Drink Water")
+                .icon("water")
+                .color("FFFFFF")
+                .logType(LogType.BINARY)
+                .targetValue(1)
+                .scheduleDays(List.of(1, 2, 3))
+                .build();
+
+        when(habitService.update(eq(1L), any(HabitDTO.class))).thenThrow(new PermissionDeniedException("You do not have permission"));
+
+        mockMvc.perform(put("/api/habit/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.message").value("You do not have permission"));

@@ -28,4 +28,10 @@ public class HabitController {
         habitService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<HabitDTO> update(@PathVariable Long id, @Validated(OnCreate.class) @RequestBody HabitDTO habitDTO) throws Exception {
+        HabitDTO updated = habitService.update(id, habitDTO);
+        return ResponseEntity.ok(updated);
+    }
 }
