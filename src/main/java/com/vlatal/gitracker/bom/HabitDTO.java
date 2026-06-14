@@ -36,8 +36,7 @@ public class HabitDTO {
     )
     private String color;
 
-    @NotBlank(groups = OnCreate.class)
-    @Size(min = 1, max = 20)
+    @NotNull(groups = OnCreate.class)
     private LogType logType;
 
     @NotNull(groups = OnCreate.class)
