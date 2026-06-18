@@ -3,12 +3,12 @@ version: '3.8'
 services:
   db-dev:
     image: postgres:16
-    container_name: gitracker_postgres_dev
+    container_name: doparatio_postgres_dev
     restart: always
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: gitracker_db_dev
+      POSTGRES_DB: doparatio_db_dev
     ports:
       - "5433:5432"
     volumes:
