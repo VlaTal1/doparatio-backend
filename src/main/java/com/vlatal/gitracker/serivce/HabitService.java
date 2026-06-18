@@ -28,7 +28,7 @@ public class HabitService {
 
     public List<HabitDTO> getAll() throws Exception {
         String currentUserId = userService.getCurrentUserId();
-        return habitRepository.findAllByUserId(currentUserId).stream()
+        return habitRepository.findAllByUserIdOrderByCreatedAtAsc(currentUserId).stream()
                 .map(habitConverter::toDTO)
                 .toList();
     }
