@@ -51,4 +51,10 @@ public class HabitDTO {
     private String userId;
 
     private List<HabitLogDTO> logs;
+
+    private Integer totalExecutions;
+
+    private Integer completedDays;
+
+    private Integer bestStreak;
 }
