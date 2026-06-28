@@ -333,7 +333,7 @@ public class TaskServiceTest {
 
         taskLogService.logTask(saved.getId(), LocalDate.of(2026, 6, 14));
 
-        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(5); // Routine is 5 mins
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(300); // Routine is 5 mins = 300s
     }
 
     @Test
@@ -348,7 +348,7 @@ public class TaskServiceTest {
 
         taskLogService.logTask(saved.getId(), LocalDate.of(2026, 6, 14));
 
-        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(15); // Medium is 15 mins
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(900); // Medium is 15 mins = 900s
     }
 
     @Test
@@ -363,7 +363,7 @@ public class TaskServiceTest {
 
         taskLogService.logTask(saved.getId(), LocalDate.of(2026, 6, 14));
 
-        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(30); // Hard is 30 mins
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(1800); // Hard is 30 mins = 1800s
     }
 
     @Test
@@ -377,7 +377,7 @@ public class TaskServiceTest {
         TaskDTO saved = taskService.create(taskDTO);
 
         taskLogService.logTask(saved.getId(), LocalDate.of(2026, 6, 14));
-        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(30);
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(1800);
 
         taskLogService.cancelLog(saved.getId(), LocalDate.of(2026, 6, 14));
         assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(0);

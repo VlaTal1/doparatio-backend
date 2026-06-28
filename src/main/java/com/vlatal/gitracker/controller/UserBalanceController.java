@@ -24,7 +24,7 @@ public class UserBalanceController {
     }
 
     @PostMapping("/subtract")
-    public ResponseEntity<UserBalanceDTO> subtractMinutes(@RequestParam int minutes) throws Exception {
-        return ResponseEntity.ok(userBalanceService.subtractMinutesForCurrentUser(minutes));
+    public ResponseEntity<UserBalanceDTO> subtractSeconds(@RequestParam int seconds) throws Exception {
+        return ResponseEntity.ok(userBalanceService.subtractSecondsForCurrentUser(seconds));
     }
 }

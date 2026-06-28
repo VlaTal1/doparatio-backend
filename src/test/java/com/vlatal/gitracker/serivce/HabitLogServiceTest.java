@@ -321,7 +321,7 @@ public class HabitLogServiceTest {
 
         habitLogService.logHabit(savedHabit.getId(), testDate);
 
-        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(10); // Base reward is 10 mins
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(600); // Base reward is 10 mins = 600s
     }
 
     @Test
@@ -344,13 +344,13 @@ public class HabitLogServiceTest {
         habitLogService.logHabit(savedHabit.getId(), testDate);
         assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(0);
 
-        // 3rd increment (3/3) -> completed! Base 10 mins awarded
+        // 3rd increment (3/3) -> completed! Base 10 mins = 600s awarded
         habitLogService.logHabit(savedHabit.getId(), testDate);
-        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(10);
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(600);
 
         // 4th increment (4/3) -> already completed, no extra reward
         habitLogService.logHabit(savedHabit.getId(), testDate);
-        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(10);
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(600);
     }
 
     @Test
@@ -364,19 +364,19 @@ public class HabitLogServiceTest {
                 .build();
         HabitDTO savedHabit = habitService.create(habitDTO);
 
-        // Day 1 (June 11) -> +10 mins (streak 1)
+        // Day 1 (June 11) -> +10 mins (streak 1) = 600s
         habitLogService.logHabit(savedHabit.getId(), testDate.minusDays(3));
-        // Day 2 (June 12) -> +10 mins (streak 2)
+        // Day 2 (June 12) -> +10 mins (streak 2) = 600s
         habitLogService.logHabit(savedHabit.getId(), testDate.minusDays(2));
-        // Day 3 (June 13) -> +10 mins (streak 3)
+        // Day 3 (June 13) -> +10 mins (streak 3) = 600s
         habitLogService.logHabit(savedHabit.getId(), testDate.minusDays(1));
         
-        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(30);
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(1800);
 
-        // Day 4 (June 14) -> +12 mins (streak 4: 4-7 days gets +2 mins bonus!)
+        // Day 4 (June 14) -> +12 mins (streak 4: 4-7 days gets +2 mins bonus!) = 720s
         habitLogService.logHabit(savedHabit.getId(), testDate);
 
-        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(42);
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(2520); // 1800 + 720
     }
 
     @Test
@@ -390,11 +390,11 @@ public class HabitLogServiceTest {
                 .build();
         HabitDTO savedHabit = habitService.create(habitDTO);
 
-        // Complete habit -> user gets 10 mins
+        // Complete habit -> user gets 10 mins = 600s
         habitLogService.logHabit(savedHabit.getId(), testDate);
-        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(10);
+        assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(600);
 
-        // Cancel log -> user loses 10 mins
+        // Cancel log -> user loses 10 mins = 600s
         habitLogService.cancelLog(savedHabit.getId(), testDate);
         assertThat(userBalanceService.getBalance().getBalance()).isEqualTo(0);
     }

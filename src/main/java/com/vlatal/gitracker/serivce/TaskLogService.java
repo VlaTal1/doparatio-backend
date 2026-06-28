@@ -58,7 +58,7 @@ public class TaskLogService {
 
         TaskLog saved = taskLogRepository.save(taskLog);
 
-        userBalanceService.addMinutes(userId, minutes);
+        userBalanceService.addSeconds(userId, minutes * 60);
 
         return TaskLogDTO.builder()
                 .id(saved.getId())
@@ -78,7 +78,7 @@ public class TaskLogService {
         TaskLog log = taskLogRepository.findByTaskIdAndLogDate(taskId, logDate)
                 .orElseThrow(() -> new NotFoundException("Task log not found"));
 
-        userBalanceService.subtractMinutes(userId, log.getMinutesEarned());
+        userBalanceService.subtractSeconds(userId, log.getMinutesEarned() * 60);
         taskLogRepository.delete(log);
     }
 

@@ -39,46 +39,46 @@ public class UserBalanceServiceTest {
     }
 
     @Test
-    public void addMinutes_success() throws Exception {
-        userBalanceService.addMinutes("test-user-id", 15);
+    public void addSeconds_success() throws Exception {
+        userBalanceService.addSeconds("test-user-id", 15);
         UserBalanceDTO dto = userBalanceService.getBalance();
         assertThat(dto.getBalance()).isEqualTo(15);
     }
 
     @Test
-    public void subtractMinutes_success() throws Exception {
-        userBalanceService.addMinutes("test-user-id", 30);
-        userBalanceService.subtractMinutes("test-user-id", 10);
+    public void subtractSeconds_success() throws Exception {
+        userBalanceService.addSeconds("test-user-id", 30);
+        userBalanceService.subtractSeconds("test-user-id", 10);
         UserBalanceDTO dto = userBalanceService.getBalance();
         assertThat(dto.getBalance()).isEqualTo(20);
     }
 
     @Test
-    public void subtractMinutes_dontGoBelowZero() throws Exception {
-        userBalanceService.addMinutes("test-user-id", 5);
-        userBalanceService.subtractMinutes("test-user-id", 10);
+    public void subtractSeconds_dontGoBelowZero() throws Exception {
+        userBalanceService.addSeconds("test-user-id", 5);
+        userBalanceService.subtractSeconds("test-user-id", 10);
         UserBalanceDTO dto = userBalanceService.getBalance();
         assertThat(dto.getBalance()).isEqualTo(0);
     }
 
     @Test
-    public void subtractMinutesForCurrentUser_success() throws Exception {
-        userBalanceService.addMinutes("test-user-id", 100);
-        UserBalanceDTO dto = userBalanceService.subtractMinutesForCurrentUser(40);
+    public void subtractSecondsForCurrentUser_success() throws Exception {
+        userBalanceService.addSeconds("test-user-id", 100);
+        UserBalanceDTO dto = userBalanceService.subtractSecondsForCurrentUser(40);
         assertThat(dto.getBalance()).isEqualTo(60);
         assertThat(dto.getUserId()).isEqualTo("test-user-id");
     }
 
     @Test
-    public void subtractMinutesForCurrentUser_negativeOrZeroIgnored() throws Exception {
-        userBalanceService.addMinutes("test-user-id", 50);
+    public void subtractSecondsForCurrentUser_negativeOrZeroIgnored() throws Exception {
+        userBalanceService.addSeconds("test-user-id", 50);
         
-        // Zero minutes should not change balance
-        UserBalanceDTO dto = userBalanceService.subtractMinutesForCurrentUser(0);
+        // Zero seconds should not change balance
+        UserBalanceDTO dto = userBalanceService.subtractSecondsForCurrentUser(0);
         assertThat(dto.getBalance()).isEqualTo(50);
         
-        // Negative minutes should not change balance
-        dto = userBalanceService.subtractMinutesForCurrentUser(-5);
+        // Negative seconds should not change balance
+        dto = userBalanceService.subtractSecondsForCurrentUser(-5);
         assertThat(dto.getBalance()).isEqualTo(50);
     }
 }

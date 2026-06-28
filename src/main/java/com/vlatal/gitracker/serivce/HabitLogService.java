@@ -81,7 +81,7 @@ public class HabitLogService {
             int streak = calculateStreak(habit, logDate);
             int minutes = getHabitMinutesEarned(streak);
             habitLog.setMinutesEarned(minutes);
-            userBalanceService.addMinutes(userId, minutes);
+            userBalanceService.addSeconds(userId, minutes * 60);
         }
 
         HabitLog savedLog = habitLogRepository.save(habitLog);
@@ -106,7 +106,7 @@ public class HabitLogService {
                 .orElseThrow(() -> new NotFoundException("Habit log not found"));
 
         if (habit.getLogType() == LogType.BINARY) {
-            userBalanceService.subtractMinutes(userId, habitLog.getMinutesEarned());
+            userBalanceService.subtractSeconds(userId, habitLog.getMinutesEarned() * 60);
             habitLogRepository.delete(habitLog);
             return null;
         } else { // NUMERIC
@@ -115,7 +115,7 @@ public class HabitLogService {
             int target = habit.getTargetValue() != null ? habit.getTargetValue() : 1;
 
             if (oldValue >= target && newValue < target) {
-                userBalanceService.subtractMinutes(userId, habitLog.getMinutesEarned());
+                userBalanceService.subtractSeconds(userId, habitLog.getMinutesEarned() * 60);
                 habitLog.setMinutesEarned(0);
             }
 

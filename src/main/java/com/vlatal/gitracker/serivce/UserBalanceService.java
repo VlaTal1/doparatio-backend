@@ -24,29 +24,29 @@ public class UserBalanceService {
     }
 
     @Transactional
-    public void addMinutes(String userId, int minutes) {
-        if (minutes <= 0) {
+    public void addSeconds(String userId, int seconds) {
+        if (seconds <= 0) {
             return;
         }
         UserBalance balance = getOrCreateBalance(userId);
-        balance.setBalance(balance.getBalance() + minutes);
+        balance.setBalance(balance.getBalance() + seconds);
         userBalanceRepository.save(balance);
     }
 
     @Transactional
-    public void subtractMinutes(String userId, int minutes) {
-        if (minutes <= 0) {
+    public void subtractSeconds(String userId, int seconds) {
+        if (seconds <= 0) {
             return;
         }
         UserBalance balance = getOrCreateBalance(userId);
-        balance.setBalance(Math.max(0, balance.getBalance() - minutes));
+        balance.setBalance(Math.max(0, balance.getBalance() - seconds));
         userBalanceRepository.save(balance);
     }
 
     @Transactional
-    public UserBalanceDTO subtractMinutesForCurrentUser(int minutes) throws Exception {
+    public UserBalanceDTO subtractSecondsForCurrentUser(int seconds) throws Exception {
         String userId = userService.getCurrentUserId();
-        subtractMinutes(userId, minutes);
+        subtractSeconds(userId, seconds);
         return getBalance();
     }
 
