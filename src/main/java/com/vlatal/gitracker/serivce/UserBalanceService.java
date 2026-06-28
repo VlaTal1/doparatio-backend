@@ -43,6 +43,13 @@ public class UserBalanceService {
         userBalanceRepository.save(balance);
     }
 
+    @Transactional
+    public UserBalanceDTO subtractMinutesForCurrentUser(int minutes) throws Exception {
+        String userId = userService.getCurrentUserId();
+        subtractMinutes(userId, minutes);
+        return getBalance();
+    }
+
     private UserBalance getOrCreateBalance(String userId) {
         return userBalanceRepository.findByUserId(userId)
                 .orElseGet(() -> userBalanceRepository.save(

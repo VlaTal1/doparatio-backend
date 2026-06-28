@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 @RestController
 @RequestMapping("/api/balance")
 @RequiredArgsConstructor
@@ -18,5 +21,10 @@ public class UserBalanceController {
     @GetMapping
     public ResponseEntity<UserBalanceDTO> getBalance() throws Exception {
         return ResponseEntity.ok(userBalanceService.getBalance());
+    }
+
+    @PostMapping("/subtract")
+    public ResponseEntity<UserBalanceDTO> subtractMinutes(@RequestParam int minutes) throws Exception {
+        return ResponseEntity.ok(userBalanceService.subtractMinutesForCurrentUser(minutes));
     }
 }

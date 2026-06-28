@@ -44,5 +44,21 @@ public class UserBalanceControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value("test-user-id"))
                 .andExpect(jsonPath("$.balance").value(42));
+     }
+
+    @Test
+    public void subtractMinutes_success() throws Exception {
+        UserBalanceDTO dto = UserBalanceDTO.builder()
+                .userId("test-user-id")
+                .balance(20)
+                .build();
+
+        when(userBalanceService.subtractMinutesForCurrentUser(10)).thenReturn(dto);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/balance/subtract")
+                        .param("minutes", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value("test-user-id"))
+                .andExpect(jsonPath("$.balance").value(20));
     }
 }
